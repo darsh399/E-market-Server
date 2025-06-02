@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
-const marketModel = new mongoose.Schema({
-    productName:{
+const marketSchema = new mongoose.Schema({
+    productName: {
         type: String,
-        required: false
+        required: true
     },
     productCateogery: {
         type: String,
@@ -16,23 +16,23 @@ const marketModel = new mongoose.Schema({
     },
     productImage: {
         type: String,
-        require: true
+        required: true 
     },
     productQuantity: {
         type: Number,
-        required: true
-    },
-    productDescription: {
-        type: String,
-        required: false
+        required: true,
+        min: [0, "quantity must be positive"]
     },
     productIsAvailable: {
         type: Boolean,
         required: true
+    },
+    productDescription: {
+        type: String,
+        required: true
     }
 });
 
-
-const productModel = mongoose.model('productModel', marketModel);
+const productModel = mongoose.model('productModel', marketSchema);
 
 module.exports = productModel;

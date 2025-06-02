@@ -2,11 +2,15 @@ const Router = require('express').Router();
 
 const {addItem, 
     deleteItem, 
-    getAllItems} = require('./../Controller/itemController');
+    getAllItems,
+    updateItem,
+searchItem} = require('./../Controller/itemController');
 
 
 Router.post('/addItem', addItem);
-Router.delete('/:id', deleteItem);
 Router.get('/allData', getAllItems);
+Router.put('/updateitem/:id', updateItem);
+Router.delete('/:id', deleteItem);
+Router.get('/finditems/:name', searchItem)
 
 module.exports = Router;
