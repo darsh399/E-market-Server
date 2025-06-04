@@ -46,7 +46,6 @@ exports.deleteUser = async (req, res) => {
   try {
     const deletedUser = await userModel.findByIdAndDelete(id);
     if (deletedUser) {
-      console.log("user deleted successfully..");
       res.status(200).json({ status: true, message: "user deleted successfully.." })
     } else {
       res.status(404).json({ status: false, message: "User not found.." });
@@ -66,7 +65,6 @@ exports.updateUser = async (req, res) => {
     if (updatedUser) {
       res.status(200).json({ status: true, message: "User updated successfully.." });
     }
-    console.log(`user updates successfully..`);
   } catch (error) {
     res.status(404).json({ status: false, message: `error is updating user: `, error });
   }

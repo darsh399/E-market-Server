@@ -1,17 +1,23 @@
 const marketModel = require('./../Model/marketModel');
 
 exports.addItem = async (req, res) => {
-  const { productName, productCateogery, productPrice,
-    productImage, productDescription, productIsAvailable, productQuantity } = req.body;
-
-
   try {
+    const {
+      productName,
+      productCateogery,
+      productPrice,
+      productDescription,
+      productIsAvailable,
+      productQuantity
+    } = req.body;
+
+    const productImage = req.file?.filename; 
 
     if (
       !productName?.trim() ||
       !productCateogery?.trim() ||
       productPrice === undefined ||
-      !productImage?.trim() ||
+      !productImage ||
       !productDescription?.trim() ||
       productIsAvailable === undefined ||
       productQuantity === undefined
@@ -21,8 +27,6 @@ exports.addItem = async (req, res) => {
         message: 'All fields are required...'
       });
     }
-
-
 
     const newItem = new marketModel({
       productName,
@@ -35,11 +39,12 @@ exports.addItem = async (req, res) => {
     });
 
     await newItem.save();
-    res.status(200).json({ success: true, message: 'new Item added successfully..' });
+
+    res.status(200).json({ success: true, message: 'New Item added successfully..' });
   } catch (error) {
-    res.status(500).json({ success: false, message: 'error in adding item :', error });
+    res.status(500).json({ success: false, message: 'Error in adding item:', error });
   }
-}
+};
 
 exports.deleteItem = async (req, res) => {
   const id = req.params.id;
