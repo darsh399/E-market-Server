@@ -2,7 +2,7 @@ const jwt = require('jsonwebtoken');
 
 const Token_Auth = async (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = 
+  const token =  req.cookies.token ||
     req.body.token || 
     req.query.token || 
     (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);

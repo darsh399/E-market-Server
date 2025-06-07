@@ -4,6 +4,9 @@ const userRoutes = require('./routes/userRoutes');
 const itemRoutes = require('./routes/itemRoutes');
 const cors = require('cors');
 const DbConnection = require('./configue/DbConnection');
+const cookieParser = require('cookie-parser');
+
+
 dotenv.config();
 
 DbConnection();
@@ -14,7 +17,7 @@ const corsOptions = {
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true
   };
-  
+  app.use(cookieParser());
   app.use(cors(corsOptions));
 app.use(express.json());
 app.use('/uploads', express.static('uploads'));

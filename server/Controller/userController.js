@@ -1,21 +1,21 @@
 const userModel = require('./../Model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
- 
+
 const hashedPassword = async (password) => {
-  try{
+  try {
     const saltRounds = 10;
     const hashPassword = await bcrypt.hash(password, saltRounds);
     return hashPassword;
 
-  }catch(error){
-    res.status(400).json({success: false, message: 'error in hasing password'});
+  } catch (error) {
+    res.status(400).json({ success: false, message: 'error in hasing password' });
   }
 }
 
 const create_Token = async (user) => {
   try {
-    const tokenData = await jwt.sign({ _id: user._id, email: user.email}, process.env.SECRET_KEY, {expiresIn: '7d'});
+    const tokenData = await jwt.sign({ _id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     console.log('token created', tokenData)
     return tokenData;
   } catch (error) {
@@ -24,7 +24,7 @@ const create_Token = async (user) => {
 }
 
 exports.addUser = async (req, res) => {
-  const { name, email, mobileNo, isAdmin, password } = req.body;
+  const { name, email, mobileNo, password, role } = req.body;
   try {
     if (!name?.trim() || !email?.trim() || !mobileNo?.trim() || !password?.trim()) {
       return res.status(400).json({
@@ -41,7 +41,7 @@ exports.addUser = async (req, res) => {
       });
     }
 
-    
+
     const hashPassword = await hashedPassword(password)
 
     const newUser = new userModel({
@@ -49,7 +49,7 @@ exports.addUser = async (req, res) => {
       email: email,
       mobileNo: mobileNo,
       password: hashPassword,
-      isAdmin: isAdmin
+      role: role
     });
 
     await newUser.save();
@@ -129,7 +129,7 @@ exports.loginUser = async (req, res) => {
 
     res.cookie('token', jwt_Token, {
       httpOnly: true,
-      secure: false, 
+      secure: false,
       sameSite: 'Lax',
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
@@ -141,9 +141,11 @@ exports.loginUser = async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        mobileNo: user.mobileNo
+        mobileNo: user.mobileNo,
+        role: user.role
       }
     });
+
 
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server error during login.', error });

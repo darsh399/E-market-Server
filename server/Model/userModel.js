@@ -1,32 +1,33 @@
 const mongoose = require('mongoose');
-const {v4: uuidv4} = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 
 
 const UserModel = new mongoose.Schema({
-    name:{
+    name: {
         type: String,
         required: true
     },
-    email:{
+    email: {
         type: String,
         required: true,
         unique: true
     },
-    mobileNo:{
+    mobileNo: {
         type: Number,
         required: true,
         unique: true
     },
-    isAdmin:{
-        type: Boolean,
-        default: false
+    role: {
+        type: String,
+        enum: ['user', 'admin', 'vendor'],
+        default: 'user'
     },
-    password:{
+    password: {
         type: String,
         required: true,
         minlength: 6
     },
-    userId:{
+    userId: {
         type: String,
         default: uuidv4,
         unique: true
