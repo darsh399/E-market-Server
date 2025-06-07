@@ -1,6 +1,27 @@
 const userModel = require('./../Model/userModel');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+ 
+const hashedPassword = async (password) => {
+  try{
+    const saltRounds = 10;
+    const hashPassword = await bcrypt.hash(password, saltRounds);
+    return hashPassword;
 
+  }catch(error){
+    res.status(400).json({success: false, message: 'error in hasing password'});
+  }
+}
+
+const create_Token = async (user) => {
+  try {
+    const tokenData = await jwt.sign({ _id: user._id, email: user.email}, process.env.SECRET_KEY, {expiresIn: '7d'});
+    console.log('token created', tokenData)
+    return tokenData;
+  } catch (error) {
+    res.status(400).json({ success: false, message: error });
+  }
+}
 
 exports.addUser = async (req, res) => {
   const { name, email, mobileNo, isAdmin, password } = req.body;
@@ -20,14 +41,14 @@ exports.addUser = async (req, res) => {
       });
     }
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    const hashPassword = await hashedPassword(password)
 
     const newUser = new userModel({
       name: name,
       email: email,
       mobileNo: mobileNo,
-      password: hashedPassword,
+      password: hashPassword,
       isAdmin: isAdmin
     });
 
@@ -36,7 +57,7 @@ exports.addUser = async (req, res) => {
     res.status(200).json({ success: true, message: "User Created Successfully..." })
 
   } catch (error) {
-    res.status(500).message({ success: false, message: error });
+    res.status(500).message({ success: false, message: "error in adding user" });
   }
 }
 
@@ -95,16 +116,23 @@ exports.loginUser = async (req, res) => {
     }
 
     const user = await userModel.findOne({ email });
-    console.log('after email ' ,email, password)
     if (!user) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
-    
+
     const isMatch = await bcrypt.compare(password, user.password);
-    console.log('after matched ',email, password)
     if (!isMatch) {
       return res.status(401).json({ success: false, message: 'Invalid email or password.' });
     }
+
+    const jwt_Token = await create_Token(user);
+
+    res.cookie('token', jwt_Token, {
+      httpOnly: true,
+      secure: false, 
+      sameSite: 'Lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
 
     res.status(200).json({
       success: true,
@@ -121,3 +149,4 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error during login.', error });
   }
 };
+
