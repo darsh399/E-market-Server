@@ -1,6 +1,7 @@
 const userModel = require('./../Model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const {sendEmail} = require('./../utils/SendEmail');
 
 const hashedPassword = async (password) => {
   try {
@@ -175,7 +176,7 @@ exports.logoutUser = async (req, res) => {
   try {
     res.clearCookie('token', {
       httpOnly: true,
-      secure: false, 
+      secure: false,
       sameSite: 'Lax',
     });
 
@@ -192,3 +193,153 @@ exports.logoutUser = async (req, res) => {
   }
 };
 
+exports.forgotPassword = async (req, res) => {
+  const { Email } = req.body;
+  
+  try {
+    if (!Email?.trim()) {
+      return res.status(400).json({ success: false, message: 'Email is required' });
+    }
+
+    const user = await userModel.findOne({ email: Email });
+    if (!user) {
+      return res.status(200).json({ 
+        success: true, 
+        message: 'If an account exists with this email, an OTP has been sent' 
+      });
+    }
+
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+
+    user.resetPasswordOtp = otp;
+    user.resetPasswordOtpExpiry = otpExpiry;
+    await user.save();
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Reset OTP',
+      html: `
+        <p>You requested a password reset for your account.</p>
+        <p>Your OTP is: <strong>${otp}</strong></p>
+        <p>This OTP is valid for 15 minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+      `
+    };
+
+   
+    await sendEmail(mailOptions);
+    
+    return res.status(200).json({ 
+      success: true, 
+      message: 'OTP sent to email if account exists' 
+    });
+
+  } catch (error) {
+    console.error('Error in forgotPassword:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error processing forgot password request' 
+    });
+  }
+};
+
+exports.verifyOtp = async (req, res) => {
+  const { email, otp } = req.body;
+  
+  try {
+    if (!email?.trim() || !otp?.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email and OTP are required' 
+      });
+    }
+
+    const user = await userModel.findOne({ 
+      email,
+      resetPasswordOtp: otp,
+      resetPasswordOtpExpiry: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid OTP or OTP expired' 
+      });
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'OTP verified successfully' 
+    });
+
+  } catch (error) {
+    console.error('Error in verifyOtp:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error verifying OTP' 
+    });
+  }
+};
+
+exports.resetPassword = async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  
+  try {
+    if (!email?.trim() || !otp?.trim() || !newPassword?.trim()) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email, OTP and new password are required' 
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters' 
+      });
+    }
+
+    const user = await userModel.findOne({ 
+      email, 
+      resetPasswordOtp: otp,
+      resetPasswordOtpExpiry: { $gt: Date.now() } 
+    });
+
+    if (!user) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid OTP or OTP expired' 
+      });
+    }
+
+    const hashedPass = await hashedPassword(newPassword);
+
+    user.password = hashedPass;
+    user.resetPasswordOtp = null;
+    user.resetPasswordOtpExpiry = null;
+    await user.save();
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Updated Successfully',
+      html: '<p>Your password has been successfully reset.</p>'
+    };
+
+    await sendEmail(mailOptions);
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Password reset successfully' 
+    });
+
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Error resetting password' 
+    });
+  }
+};

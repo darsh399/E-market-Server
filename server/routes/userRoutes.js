@@ -7,6 +7,9 @@ Router.post('/addUser', userController.addUser);
 Router.post('/login', userController.loginUser);
 Router.get('/profile', Token_Auth, userController.getProfile); 
 Router.post('/logout', userController.logoutUser);
+Router.post('/forgotPassword', userController.forgotPassword);
+Router.post('/verify-otp', userController.verifyOtp);
+Router.post('/reset-password', userController.resetPassword);
 Router.put('/users/:id', userController.updateUser);
 Router.delete('/:id', userController.deleteUser);
 

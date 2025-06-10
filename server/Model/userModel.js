@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const { v4: uuidv4 } = require('uuid');
 
-
 const UserModel = new mongoose.Schema({
     name: {
         type: String,
@@ -31,8 +30,16 @@ const UserModel = new mongoose.Schema({
         type: String,
         default: uuidv4,
         unique: true
+    },
+    resetPasswordOtp: {
+        type: String,
+        default: null
+    },
+    resetPasswordOtpExpiry: {
+        type: Date,
+        default: null
     }
-})
+});
 
 const userModel = mongoose.model('userModel', UserModel);
 
