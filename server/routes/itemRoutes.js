@@ -11,8 +11,8 @@ searchItem} = require('./../Controller/itemController');
 
 Router.post('/addItem', jwt_auth, upload.single('productImage'), addItem);
 Router.get('/allData', getAllItems);
-Router.put('/updateitem/:id', updateItem);
-Router.delete('/:id', deleteItem);
-Router.get('/finditems/:name', searchItem)
+Router.put('/updateitem/:id', jwt_auth, updateItem);
+Router.delete('/:id', jwt_auth, deleteItem);
+Router.get('/finditems/:name', jwt_auth, searchItem)
 
 module.exports = Router;

@@ -9,9 +9,11 @@ Router.get('/profile', Token_Auth, userController.getProfile);
 Router.post('/logout', userController.logoutUser);
 Router.post('/forgotPassword', userController.forgotPassword);
 Router.post('/verify-otp', userController.verifyOtp);
+Router.post('/addItem', userController.addItemInCart);
 Router.post('/reset-password', userController.resetPassword);
 Router.put('/users/:id', userController.updateUser);
 Router.delete('/:id', userController.deleteUser);
+Router.get('/get-items/:id', userController.getItemFromCart);
 
 
 module.exports= Router;

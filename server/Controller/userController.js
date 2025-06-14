@@ -1,7 +1,7 @@
 const userModel = require('./../Model/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {sendEmail} = require('./../utils/SendEmail');
+const { sendEmail } = require('./../utils/SendEmail');
 
 const hashedPassword = async (password) => {
   try {
@@ -195,7 +195,7 @@ exports.logoutUser = async (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   const { Email } = req.body;
-  
+
   try {
     if (!Email?.trim()) {
       return res.status(400).json({ success: false, message: 'Email is required' });
@@ -203,9 +203,9 @@ exports.forgotPassword = async (req, res) => {
 
     const user = await userModel.findOne({ email: Email });
     if (!user) {
-      return res.status(200).json({ 
-        success: true, 
-        message: 'If an account exists with this email, an OTP has been sent' 
+      return res.status(200).json({
+        success: true,
+        message: 'If an account exists with this email, an OTP has been sent'
       });
     }
 
@@ -228,89 +228,89 @@ exports.forgotPassword = async (req, res) => {
       `
     };
 
-   
+
     await sendEmail(mailOptions);
-    
-    return res.status(200).json({ 
-      success: true, 
-      message: 'OTP sent to email if account exists' 
+
+    return res.status(200).json({
+      success: true,
+      message: 'OTP sent to email if account exists'
     });
 
   } catch (error) {
     console.error('Error in forgotPassword:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Error processing forgot password request' 
+    return res.status(500).json({
+      success: false,
+      message: 'Error processing forgot password request'
     });
   }
 };
 
 exports.verifyOtp = async (req, res) => {
   const { email, otp } = req.body;
-  
+
   try {
     if (!email?.trim() || !otp?.trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email and OTP are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email and OTP are required'
       });
     }
 
-    const user = await userModel.findOne({ 
+    const user = await userModel.findOne({
       email,
       resetPasswordOtp: otp,
       resetPasswordOtpExpiry: { $gt: Date.now() }
     });
 
     if (!user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid OTP or OTP expired' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP or OTP expired'
       });
     }
 
-    return res.status(200).json({ 
-      success: true, 
-      message: 'OTP verified successfully' 
+    return res.status(200).json({
+      success: true,
+      message: 'OTP verified successfully'
     });
 
   } catch (error) {
     console.error('Error in verifyOtp:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Error verifying OTP' 
+    return res.status(500).json({
+      success: false,
+      message: 'Error verifying OTP'
     });
   }
 };
 
 exports.resetPassword = async (req, res) => {
   const { email, otp, newPassword } = req.body;
-  
+
   try {
     if (!email?.trim() || !otp?.trim() || !newPassword?.trim()) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Email, OTP and new password are required' 
+      return res.status(400).json({
+        success: false,
+        message: 'Email, OTP and new password are required'
       });
     }
 
     if (newPassword.length < 6) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Password must be at least 6 characters' 
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
       });
     }
 
-    const user = await userModel.findOne({ 
-      email, 
+    const user = await userModel.findOne({
+      email,
       resetPasswordOtp: otp,
-      resetPasswordOtpExpiry: { $gt: Date.now() } 
+      resetPasswordOtpExpiry: { $gt: Date.now() }
     });
 
     if (!user) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Invalid OTP or OTP expired' 
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid OTP or OTP expired'
       });
     }
 
@@ -330,16 +330,53 @@ exports.resetPassword = async (req, res) => {
 
     await sendEmail(mailOptions);
 
-    return res.status(200).json({ 
-      success: true, 
-      message: 'Password reset successfully' 
+    return res.status(200).json({
+      success: true,
+      message: 'Password reset successfully'
     });
 
   } catch (error) {
     console.error('Error in resetPassword:', error);
-    return res.status(500).json({ 
-      success: false, 
-      message: 'Error resetting password' 
+    return res.status(500).json({
+      success: false,
+      message: 'Error resetting password'
     });
   }
 };
+
+
+exports.addItemInCart = async (req, res) => {
+  const { userId, productId } = req.body;
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isItemInCart = user.cart.includes(productId);
+    if (!isItemInCart) {
+      user.cart.push(productId);
+      await user.save();
+    }
+
+    return res.status(200).json({ success: true, message: 'Item added in cart' });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+
+exports.getItemFromCart = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await userModel.findById(userId).populate('cart');
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User Not Found' });
+    }
+    return res.status(200).json({ success: true, cartItems: user.cart });
+    ;
+  } catch (err) {
+
+    res.status(500).json({ error: err.message });
+  }
+}

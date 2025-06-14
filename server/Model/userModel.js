@@ -38,8 +38,16 @@ const UserModel = new mongoose.Schema({
     resetPasswordOtpExpiry: {
         type: Date,
         default: null
-    }
+    },
+    cart:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'productModel'
+        }
+    ]
 });
+
+
 
 const userModel = mongoose.model('userModel', UserModel);
 
