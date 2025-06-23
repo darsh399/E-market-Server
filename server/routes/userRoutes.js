@@ -10,9 +10,11 @@ Router.post('/logout', userController.logoutUser);
 Router.post('/forgotPassword', userController.forgotPassword);
 Router.post('/verify-otp', userController.verifyOtp);
 Router.post('/addItem', userController.addItemInCart);
+Router.post('/remove-all-carts-items', userController.clearCart);
+Router.post('/remove-item-from-cart', userController.removeItemFromCart);
+Router.delete('/delete-user/:id', userController.deleteUser);
 Router.post('/reset-password', userController.resetPassword);
 Router.put('/users/:id', userController.updateUser);
-Router.delete('/:id', userController.deleteUser);
 Router.get('/get-items/:id', userController.getItemFromCart);
 
 

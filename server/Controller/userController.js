@@ -17,7 +17,6 @@ const hashedPassword = async (password) => {
 const create_Token = async (user) => {
   try {
     const tokenData = await jwt.sign({ _id: user._id, email: user.email, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
-    console.log('token created', tokenData)
     return tokenData;
   } catch (error) {
     res.status(400).json({ success: false, message: error });
@@ -58,26 +57,38 @@ exports.addUser = async (req, res) => {
     res.status(200).json({ success: true, message: "User Created Successfully..." })
 
   } catch (error) {
-    res.status(500).message({ success: false, message: "error in adding user" });
+    res.status(500).json({ success: false, message: "error in adding user" });
   }
 }
 
 
 exports.deleteUser = async (req, res) => {
   const id = req.params.id;
+  const password = req.body.password;
+  console.log(id)
   try {
-    const deletedUser = await userModel.findByIdAndDelete(id);
-    if (deletedUser) {
-      res.status(200).json({ status: true, message: "user deleted successfully.." })
-    } else {
-      res.status(404).json({ status: false, message: "User not found.." });
+    const user = await userModel.findById(id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
+    const isMatched = await bcrypt.compare(password, user.password);
+    if (!isMatched) {
+      return res.status(401).json({ success: false, message: 'Incorrect password' });
+    }
+
+    const userDeleted = await userModel.findByIdAndDelete(id);
+    if (!userDeleted) {
+      return res.status(500).json({ success: false, message: 'Failed to delete user' });
+    }
+
+    return res.status(200).json({ success: true, message: 'User deleted successfully' });
 
   } catch (error) {
-    res.status(500).json({ status: false, message: `error occurred in delete user`, error })
+    return res.status(500).json({ success: false, message: 'Error occurred in delete user', error });
   }
-}
+};
+
 
 exports.updateUser = async (req, res) => {
   const id = req.params.id;
@@ -210,7 +221,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes expiry
+    const otpExpiry = new Date(Date.now() + 15 * 60 * 1000);
 
     user.resetPasswordOtp = otp;
     user.resetPasswordOtpExpiry = otpExpiry;
@@ -379,4 +390,47 @@ exports.getItemFromCart = async (req, res) => {
 
     res.status(500).json({ error: err.message });
   }
+}
+
+exports.removeItemFromCart = async (req, res) => {
+  const { userId, productId } = req.body;
+
+  try {
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const productIndex = user.cart.indexOf(productId);
+
+    if (productIndex === -1) {
+      return res.status(404).json({ success: false, message: 'Item not found in cart' });
+    }
+
+    user.cart.splice(productIndex, 1);
+    await user.save();
+    return res.status(200).json({ success: true, message: 'Item removed from cart successfully' });
+
+  } catch (error) {
+    console.error('Error in removeItemFromCart:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+exports.clearCart = async (req, res) => {
+  const {userId} = req.body;
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+    user.cart = [];
+    await user.save();
+    res.status(200).json({ success: true, message: 'Cart cleared successfully' });
+  } catch (error) {
+    console.error('Error in clearing cart:', error);
+    res.status(500).json({ success: false, message: 'Error clearing cart' });
+  }
+
 }
