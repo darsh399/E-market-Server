@@ -385,7 +385,6 @@ exports.getItemFromCart = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User Not Found' });
     }
     return res.status(200).json({ success: true, cartItems: user.cart });
-    ;
   } catch (err) {
 
     res.status(500).json({ error: err.message });
@@ -434,3 +433,26 @@ exports.clearCart = async (req, res) => {
   }
 
 }
+
+exports.orderItem = async(req, res) => {
+  const {userId, productId} = req.body;
+
+
+}
+
+exports.getPreviousOrderedItems = async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    const user = await userModel.findById(userId).populate('previousOrders.product');
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    res.status(200).json({ success: true, previousOrders: user.previousOrders });
+
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching previous orders', error });
+  }
+};

@@ -39,7 +39,14 @@ const UserModel = new mongoose.Schema({
         type: Date,
         default: null
     },
-    cart:[
+    previousOrders: [
+        {
+            product: { type: mongoose.Schema.Types.ObjectId, ref: 'productModel' },
+            quantity: Number,
+            orderedAt: { type: Date, default: Date.now }
+        }
+    ],
+    cart: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'productModel'

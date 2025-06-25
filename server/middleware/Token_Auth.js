@@ -19,7 +19,7 @@ const Token_Auth = async (req, res, next) => {
     next();
 
   } catch (error) {
-    return res.status(403).json({ success: false, message: 'Token is invalid or expired' });
+    return res.status(403).json({ success: false, message: 'Token is invalid or expired',error });
   }
 };
 
